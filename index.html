@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miori Studio - Web Design & Goodnotes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Mitr:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #ffe6f0;
+            --paper: #ffffff;
+            --text-dark: #8a516b;
+            --text-light: #bd859b;
+            --accent-pink: #eb7aa6;
+            --accent-yellow: #fcf2b6;
+            --mint: #f7c8dc;
+            --peach: #ffc2d5;
+            --sky: #f6d8e5;
+            --line-color: rgba(235, 122, 166, 0.2);
+        }
+
+        body {
+            background-color: var(--bg-main);
+            background-image: repeating-linear-gradient(to right, #ffe6f0, #ffe6f0 40px, #ffdbee 40px, #ffdbee 80px);
+            font-family: 'Mitr', sans-serif;
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        .font-fredoka { font-family: 'Fredoka', sans-serif; }
+
+        .paper-container {
+            background-color: var(--paper);
+            position: relative;
+            background-image: repeating-linear-gradient(to bottom, transparent, transparent 35px, var(--line-color) 35px, var(--line-color) 36px);
+            background-position: top 40px center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+        }
+
+        .jagged-top {
+            position: absolute;
+            top: -12px; left: 0; width: 100%; height: 13px;
+            background: linear-gradient(-45deg, transparent 9px, var(--paper) 0), linear-gradient(45deg, transparent 9px, var(--paper) 0);
+            background-size: 18px 18px;
+            background-repeat: repeat-x;
+        }
+
+        .jagged-bottom {
+            position: absolute;
+            bottom: -12px; left: 0; width: 100%; height: 13px;
+            background: linear-gradient(-45deg, var(--paper) 9px, transparent 0), linear-gradient(45deg, var(--paper) 9px, transparent 0);
+            background-size: 18px 18px;
+            background-repeat: repeat-x;
+        }
+
+        .polaroid {
+            background: #fff;
+            padding: 8px 8px 25px 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            border: 1px solid #f5e6e6;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+        .polaroid:hover {
+            transform: scale(1.02) rotate(0deg) !important;
+            z-index: 30;
+        }
+
+        /* Cute Custom Scrollbar */
+        .cute-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .cute-scroll::-webkit-scrollbar-track {
+            background: #fff0f5;
+            border-radius: 10px;
+        }
+        .cute-scroll::-webkit-scrollbar-thumb {
+            background: #f2adcc;
+            border-radius: 10px;
+        }
+        .cute-scroll::-webkit-scrollbar-thumb:hover {
+            background: #eb7aa6;
+        }
+
+        /* Tape Effects */
+        .tape {
+            position: absolute;
+            mix-blend-mode: multiply;
+            opacity: 0.85;
+            z-index: 20;
+        }
+        .tape-1 { clip-path: polygon(1% 2%, 99% 0%, 98% 98%, 0% 100%); }
+        .tape-2 { clip-path: polygon(0% 0%, 100% 1%, 99% 100%, 2% 99%); }
+        .tape-3 { clip-path: polygon(2% 1%, 98% 2%, 100% 99%, 0% 98%); }
+        
+        .bg-tape-pink { background-color: #ffb6c1; }
+        .bg-tape-yellow { background-color: #fdf096; }
+        .bg-tape-mint { background-color: #f7c8dc; }
+
+        .dotted-leader { flex-grow: 1; border-bottom: 2px dotted var(--text-light); margin: 0 8px; opacity: 0.3; transform: translateY(-4px); }
+        .modal-overlay { background-color: rgba(138, 81, 107, 0.4); backdrop-filter: blur(4px); }
+
+        .portfolio-card { cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .portfolio-card:hover { transform: translateY(-5px); }
+
+        /* Admin Mode Controls */
+        .admin-mode .editable-image-container {
+            position: relative;
+            outline: 2px dashed #eb7aa6;
+            cursor: pointer;
+        }
+        .admin-mode .editable-image-container::after {
+            content: '📷 เปลี่ยนรูป';
+            position: absolute;
+            inset: 0;
+            background: rgba(235, 122, 166, 0.75);
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            border-radius: inherit;
+        }
+        .admin-mode .editable-image-container:hover::after { opacity: 1; }
+        .admin-mode [contenteditable="true"] {
+            outline: 1.5px dashed #eb7aa6;
+            background-color: rgba(252, 242, 182, 0.3);
+            border-radius: 4px;
+            padding: 2px 4px;
+        }
+        .admin-only { display: none; }
+        .admin-mode .admin-only { display: block; }
+
+        /* Review Speech Bubble Tail */
+        .speech-bubble {
+            position: relative;
+        }
+        .speech-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 20px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid #ffffff;
+        }
+    </style>
+</head>
+<body class="min-h-screen py-6 sm:py-10 px-2 sm:px-4 md:px-8 relative selection:bg-[#fcf2b6] selection:text-[#8a516b]">
+
+    <!-- Admin Top Control Bar -->
+    <div class="fixed top-3 right-3 z-50 flex items-center gap-2 bg-white/95 backdrop-blur-md border-2 border-[#eb7aa6] px-3 py-1.5 rounded-full shadow-lg text-xs font-bold text-[#8a516b]">
+        <span>⚙️ ระบบหลังบ้าน</span>
+        <button id="adminToggleBtn" onclick="toggleAdminMode()" class="bg-[#eb7aa6] text-white px-3 py-1 rounded-full text-[10px] hover:bg-[#d86391] transition">เปิดโหมดแก้ไข</button>
+        <button id="saveAdminBtn" onclick="saveAdminData()" class="hidden bg-[#eb7aa6] text-white px-3 py-1 rounded-full text-[10px] hover:bg-[#eb7aa6] transition">💾 บันทึกข้อมูล</button>
+    </div>
+
+    <div class="fixed top-16 right-3 z-40 hidden admin-only" id="adminHint">
+        <span class="bg-white/95 border border-[#f2adcc] text-[#8a516b] text-[9px] px-3 py-1.5 rounded-full shadow">โหมดแอดมิน: แก้ไขข้อความ / เปลี่ยนรูป / ลิงก์ Drive / คิวงาน</span>
+    </div>
+
+    <input type="file" id="globalFileInput" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+
+    <div class="max-w-5xl mx-auto flex flex-col gap-8 sm:gap-10 items-center w-full">
+        
+        <!-- HEADER LOGO & INFO SECTION -->
+        <div class="w-full flex flex-row justify-between items-stretch gap-2 sm:gap-10 mt-2 sm:mt-6 relative z-20 px-1 sm:px-4">
+            <!-- Left Info -->
+            <div class="relative flex-[1.6] sm:flex-1 flex flex-col">
+                <div class="absolute inset-0 bg-[#f5a9cb] transform rotate-[-1deg] translate-x-[-4px] translate-y-[6px] sm:translate-x-[-8px] sm:translate-y-[12px] opacity-80 z-0 rounded-md"></div>
+                <div class="bg-white relative z-10 p-3 sm:p-10 transform rotate-[-0.5deg] rounded-md shadow-sm border border-gray-100/50 flex-1 flex flex-col justify-center">
+                    <div class="tape bg-tape-pink tape-1 -top-4 left-1/2 transform -translate-x-1/2 rotate-1 w-24 sm:w-32 h-6 sm:h-8"></div>
+                    <div class="space-y-2 sm:space-y-6 pt-2">
+                        <div>
+                            <h2 contenteditable="false" data-editable-id="header-title" class="font-fredoka text-[#8a516b] font-bold text-[12px] sm:text-3xl uppercase tracking-tight leading-none">WEB DESIGN SERVICES</h2>
+                            <p contenteditable="false" data-editable-id="header-desc" class="mt-1 sm:mt-3 text-[#8a516b] text-[9px] sm:text-base font-medium leading-tight">
+                                ร้านมิโอริ (Miori) รับทำเว็บไซต์ครบวงจร และจำหน่ายแอป Goodnotes ทุกรูปแบบ เริ่มต้นที่ 20.- เท่านั้น
+                            </p>
+                        </div>
+                        <div class="text-[#bd859b] text-[8px] sm:text-sm leading-tight sm:leading-relaxed bg-[#fff8fb] p-2 sm:p-5 rounded-lg border border-[#f2adcc]/30 relative">
+                            <p class="font-bold text-[#8a516b] mb-1 uppercase text-[8px] sm:text-xs">ประเภทเว็บที่รับทำ:</p>
+                            <ul contenteditable="false" data-editable-id="service-list" class="list-none space-y-0.5 sm:space-y-1.5 font-medium">
+                                <li>- เว็บเรทราคาแอปพรีเมียม</li>
+                                <li>- เว็บเรทราคารับเติมเกมส์</li>
+                                <li>- เว็บเรทราคารับทำป้าย</li>
+                                <li>- เว็บอื่น ๆ สอบถามเพิ่มเติมได้ค่ะ</li>
+                            </ul>
+                        </div>
+                        <div class="text-center">
+                            <p contenteditable="false" data-editable-id="header-tag" class="text-[7px] sm:text-xs text-[#bd859b] font-medium border-t border-dashed border-[#f2adcc] pt-1 sm:pt-4 italic">
+                                ✨ ออกแบบจัดวางให้ฟรี คิวไว งานละเอียด ✨
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Logo -->
+            <div class="relative flex-1 flex flex-col items-center shrink-0 pt-2">
+                <div class="relative bg-white border border-[#eb7aa6] sm:border-2 rounded-full px-2 sm:px-5 py-0.5 sm:py-1.5 mb-2 sm:mb-4 z-30 transform rotate-2 shadow-sm">
+                    <span contenteditable="false" data-editable-id="shop-title" class="font-fredoka text-[#eb7aa6] text-[8px] sm:text-[12px] font-bold tracking-wide uppercase">MIORI STUDIO</span>
+                </div>
+                <div class="polaroid transform rotate-[-3deg] w-full max-w-[110px] sm:max-w-[240px] z-10 border border-white sm:border-2">
+                    <div class="tape bg-tape-mint tape-2 -top-3 left-1/2 transform -translate-x-1/2 rotate-2 w-12 sm:w-20 h-4 sm:h-6"></div>
+                    <div class="w-full aspect-square bg-[#fff9eb] overflow-hidden rounded-sm relative border border-[#f5e687]/30 editable-image-container" onclick="triggerImageSelect('img-logo')">
+                        <img id="img-logo" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1280&h=1280&auto=format&fit=crop&q=80" alt="Miori Logo" class="w-full h-full object-cover">
+                    </div>
+                    <div contenteditable="false" data-editable-id="welcome-tag" class="absolute bottom-1 sm:bottom-3 right-0 bg-[#8a516b] text-white px-2 sm:px-4 py-0.5 sm:py-1.5 text-[5px] sm:text-[9px] font-fredoka font-bold rounded-l-md shadow-md">
+                        WELCOME TO MIORI SHOP
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BANNER SECTION (1122*495 px) -->
+        <div class="w-full px-1 sm:px-4 relative z-20">
+            <div class="polaroid bg-white p-2 sm:p-4 rounded-xl border-2 border-[#f2adcc]/40 relative">
+                <div class="tape bg-tape-yellow tape-1 -top-4 left-10 rotate-[-4deg] w-28 sm:w-40 h-6 sm:h-8"></div>
+                <div class="tape bg-tape-pink tape-2 -top-4 right-10 rotate-[5deg] w-28 sm:w-40 h-6 sm:h-8"></div>
+                <div class="w-full aspect-[1122/495] bg-[#fff8fb] overflow-hidden rounded-lg relative border border-[#f5e6e6] editable-image-container" onclick="triggerImageSelect('img-banner')">
+                    <img id="img-banner" src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80" alt="Miori Banner" class="w-full h-full object-cover">
+                </div>
+            </div>
+        </div>
+
+        <!-- GALLERY SAMPLES (ช่องละการ์ด สามารถใส่มุมมอง Drive ได้) -->
+        <div class="w-full px-1 sm:px-4 my-2">
+            <div class="text-center mb-6">
+                <h2 class="font-fredoka text-xl sm:text-3xl font-bold text-[#eb7aa6] tracking-wider">♡ ✦ GALLERY SAMPLES ✦ ♡</h2>
+                <p class="text-[10px] sm:text-xs text-[#bd859b] mt-1">รวมตัวอย่างผลงาน — คลิกการ์ดเพื่อเปิด Google Drive</p>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4">
+                <div id="polaroidGrid" class="contents"></div>
+            </div>
+        </div>
+
+        <!-- ปุ่มสำหรับเช็คคิวงาน (สำหรับลูกค้า) -->
+        <div class="my-2 z-20">
+            <button onclick="openModal('modal-queue')" class="bg-gradient-to-r from-[#eb7aa6] to-[#f2adcc] text-white px-8 py-3 rounded-full font-bold shadow-md border-2 border-white hover:scale-105 transition transform flex items-center gap-2 text-sm sm:text-base">
+                <span class="animate-pulse">🌸</span>
+                <span>♡ เช็คคิวงาน / Check Queue ♡</span>
+                <span class="animate-pulse">🌸</span>
+            </button>
+        </div>
+
+        <!-- MAIN NOTEBOOK CONTAINER -->
+        <div class="paper-container w-full rounded-sm pt-12 sm:pt-16 pb-16 sm:pb-20 px-4 sm:px-10 lg:px-16 z-10 relative mt-2">
+            <div class="jagged-top"></div>
+            <div class="jagged-bottom"></div>
+            <div class="tape bg-tape-yellow tape-2 -top-3 -left-4 transform -rotate-3 w-24 sm:w-36 h-6 sm:h-8 z-20"></div>
+
+            <div class="mb-8 sm:mb-12 pt-2 relative z-10">
+                <h1 contenteditable="false" data-editable-id="shop-heading" class="font-fredoka text-[#8a516b] text-3xl sm:text-5xl font-black tracking-tighter uppercase leading-none">MIORI SHOP</h1>
+            </div>
+
+            <!-- SECTIONS -->
+            <div class="space-y-12 sm:space-y-16">
+                
+                <!-- 01. GALLERY -->
+                <div class="schedule-item flex relative">
+                    <div class="w-8 sm:w-12 pt-1 shrink-0 font-fredoka text-[#eb7aa6] font-bold text-lg sm:text-2xl leading-none">01.</div>
+                    <div class="flex-1">
+                        <div class="flex items-center w-full mb-2">
+                            <h2 class="font-fredoka text-[#8a516b] font-bold text-base sm:text-xl uppercase tracking-wider">GALLERY</h2>
+                            <div class="dotted-leader"></div>
+                        </div>
+                        <p class="text-[11px] sm:text-xs text-[#bd859b] mb-4 font-medium">เลือกชิ้นส่วนเพื่อประกอบป้าย</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <a href="https://drive.google.com/drive/folders/14eGRjufzjTVdgKFyZKAZL_Ucotuq3WIu?usp=drive_link" target="_blank" class="portfolio-card bg-[#fffcf0] p-5 sm:p-6 rounded-2xl border-2 border-[#fceb9a] shadow-sm text-center hover:shadow-md transition">
+                                <div class="text-3xl mb-2">🍰</div>
+                                <div class="bg-[#fceb9a] text-[#8a516b] px-3 py-1 rounded-full text-[11px] font-bold border border-white inline-block mb-2">̊+‧꒰ა Block ໒꒱ ‧+ ̊</div>
+                                <div class="text-xs font-bold text-[#8a516b]">ดูตัวอย่างใน Google Drive ↗</div>
+                            </a>
+                            <a href="https://drive.google.com/drive/folders/1EfG87-_uhPZ9wCeZAtnV3FKJgdzJO57H?usp=drive_link" target="_blank" class="portfolio-card bg-[#fff8fb] p-5 sm:p-6 rounded-2xl border-2 border-[#f2adcc] shadow-sm text-center hover:shadow-md transition">
+                                <div class="text-3xl mb-2">🧸</div>
+                                <div class="bg-[#f2adcc] text-white px-3 py-1 rounded-full text-[11px] font-bold border border-white inline-block mb-2">̊+‧꒰ა Toon ໒꒱ ‧+ ̊</div>
+                                <div class="text-xs font-bold text-[#8a516b]">ดูตัวอย่างใน Google Drive ↗</div>
+                            </a>
+                            <a href="https://drive.google.com/drive/folders/1TPvtkQKp89HgEYJCHPVzOlMqwElLID9Y?usp=drive_link" target="_blank" class="portfolio-card bg-[#fff5f8] p-5 sm:p-6 rounded-2xl border-2 border-[#ffc2d5] shadow-sm text-center hover:shadow-md transition">
+                                <div class="text-3xl mb-2">🌷</div>
+                                <div class="bg-[#ffc2d5] text-[#8a516b] px-3 py-1 rounded-full text-[11px] font-bold border border-white inline-block mb-2">̊+‧꒰ა Descor ໒꒱ ‧+ ̊</div>
+                                <div class="text-xs font-bold text-[#8a516b]">ดูตัวอย่างใน Google Drive ↗</div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 02. PRICING & ADD-ON -->
+                <div class="schedule-item flex relative">
+                    <div class="w-8 sm:w-12 pt-1 shrink-0 font-fredoka text-[#eb7aa6] font-bold text-lg sm:text-2xl leading-none">02.</div>
+                    <div class="flex-1">
+                        <h2 class="font-fredoka text-[#8a516b] font-bold text-base sm:text-xl uppercase tracking-wider mb-5">Pricing & Add-ons</h2>
+                        <div class="bg-[#fffdf0] p-5 sm:p-8 rounded-2xl border-2 border-[#fceb9a] shadow-sm space-y-8 relative">
+                            <div class="tape bg-tape-yellow tape-1 -top-3 left-6 transform rotate-2 w-20 h-5"></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start relative z-10">
+                                <div class="space-y-4">
+                                    <div class="border-b-2 border-dashed border-[#fceb9a] pb-2">
+                                        <p contenteditable="false" data-editable-id="price-start" class="text-[#8a516b] font-bold text-lg leading-none">ราคาเริ่มต้น 129.-</p>
+                                        <p contenteditable="false" data-editable-id="price-sub" class="text-[10px] sm:text-xs text-[#bd859b] font-medium mt-1">(รายละเอียดไม่เกิน 200 lines และใส่โลโก้อย่างเดียว)</p>
+                                    </div>
+                                    <ul contenteditable="false" data-editable-id="price-list" class="text-xs sm:text-sm space-y-2 font-medium text-[#8a516b]">
+                                        <li class="flex justify-between"><span>- เกิน 200 lines:</span> <span class="font-bold">เริ่มที่ 139.-</span></li>
+                                        <li class="flex justify-between"><span>- เกิน 400 lines:</span> <span class="font-bold">เริ่มที่ 189.-</span></li>
+                                        <li class="flex justify-between"><span>- เกิน 600 lines:</span> <span class="font-bold">เริ่มที่ 249.-</span></li>
+                                    </ul>
+                                </div>
+                                <div class="space-y-4 relative">
+                                    <div class="bg-white/80 p-4 rounded-xl border-2 border-[#ffc2b3]/30 flex flex-col items-center justify-center text-center h-full relative">
+                                        <div class="tape bg-tape-pink tape-2 -top-3 left-1/2 transform -translate-x-1/2 rotate-1 w-16 h-4"></div>
+                                        <p class="text-[11px] sm:text-sm font-bold text-[#8a516b] leading-tight mt-1">Add on</p>
+                                        <p contenteditable="false" data-editable-id="addon-desc" class="text-[11px] sm:text-sm font-bold text-[#8a516b] leading-tight">เพิ่มรูปแบนเนอร์ 1-2 รูป</p>
+                                        <span contenteditable="false" data-editable-id="addon-price" class="text-[#eb7aa6] font-bold text-xl sm:text-2xl mt-1 tracking-tight">+29.-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 03. HOW TO ORDER -->
+                <div class="schedule-item flex relative">
+                    <div class="w-8 sm:w-12 pt-1 shrink-0 font-fredoka text-[#eb7aa6] font-bold text-lg sm:text-2xl leading-none">03.</div>
+                    <div class="flex-1">
+                        <h2 class="font-fredoka text-[#8a516b] font-bold text-base sm:text-xl uppercase tracking-wider mb-4">How to order</h2>
+                        <div class="bg-[#fff4f8] p-5 sm:p-6 rounded-2xl border-2 border-[#f2adcc] text-xs sm:text-sm space-y-4 relative">
+                            <div class="tape bg-tape-mint tape-1 -top-2 -right-4 transform rotate-6 w-16 h-4"></div>
+                            <p class="font-bold text-[#8a516b]">ขั้นตอนการสั่งซื้อ:</p>
+                            <ol contenteditable="false" data-editable-id="order-steps" class="list-decimal pl-5 space-y-2 text-[#9b6b80] font-medium">
+                                <li>เขียนรายละเอียดร้านค้า หรือพิมพ์ข้อมูลส่งมาได้เลย</li>
+                                <li>ส่งลิงก์ตัวอย่างงาน & โลโก้ (ต้องใส่ Google Drive เท่านั้น)</li>
+                                <li>ชำระเงินราคาเริ่มต้น 129.- (ส่วนต่างแจ้งหลังส่งตรวจสอบ)</li>
+                                <li>รอรับลิงก์ (ปกติ 4-8 ชม. / งานเร่ง *2 ราคา)</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 04. SHOP RULES -->
+                <div class="schedule-item flex relative">
+                    <div class="w-8 sm:w-12 pt-1 shrink-0 font-fredoka text-[#eb7aa6] font-bold text-lg sm:text-2xl leading-none">04.</div>
+                    <div class="flex-1">
+                        <h2 class="font-fredoka text-[#8a516b] font-bold text-base sm:text-xl uppercase tracking-wider mb-4">Shop Rules</h2>
+                        <div class="bg-[#fff5f2] p-5 sm:p-6 rounded-2xl border-2 border-[#ffc2b3] text-xs sm:text-sm space-y-3 relative">
+                            <div class="tape bg-tape-pink tape-2 -top-2 -left-4 transform -rotate-12 w-16 h-4"></div>
+                            <ul contenteditable="false" data-editable-id="shop-rules-list" class="list-disc pl-5 space-y-2 font-medium text-[#d97762]">
+                                <li>โอนเงินแล้วไม่คืนเงินทุกกรณี</li>
+                                <li>ยกเลิกหลังตรวจงานแล้ว ไม่คืนเงินและส่งงานปกติ</li>
+                                <li>งดจิกงดเร่งทุกกรณีนะคะ</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 05. CUSTOMER REVIEWS -->
+                <div class="schedule-item flex relative">
+                    <div class="w-8 sm:w-12 pt-1 shrink-0 font-fredoka text-[#eb7aa6] font-bold text-lg sm:text-2xl leading-none">05.</div>
+                    <div class="flex-1">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                            <div class="flex items-center">
+                                <h2 class="font-fredoka text-[#8a516b] font-bold text-base sm:text-xl uppercase tracking-wider">CUSTOMER REVIEWS</h2>
+                            </div>
+                            <button onclick="openModal('modal-add-review')" class="bg-gradient-to-r from-[#eb7aa6] to-[#f2adcc] text-white px-5 py-2 rounded-full font-bold text-xs shadow hover:scale-105 transition flex items-center justify-center gap-1.5 self-start sm:self-auto border border-white">
+                                💬 เขียนรีวิวสินค้า
+                            </button>
+                        </div>
+
+                        <!-- Review Cards Container -->
+                        <div class="max-h-[320px] overflow-y-auto cute-scroll pr-1 space-y-3" id="reviewsContainer">
+                            <!-- JS Will Render Reviews Here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTACT SECTION (ปรับเปลี่ยนเป็นวงกลมชมพู มินิมอล 2 ช่อง) -->
+                <div class="pt-6 border-t-2 border-dashed border-[#f2adcc]/50">
+                    <div class="text-center mb-6">
+                        <h2 class="font-fredoka text-xl sm:text-2xl font-bold text-[#8a516b] tracking-wider uppercase">♡ CONTACT ME ♡</h2>
+                        <p class="text-xs text-[#bd859b] mt-1">ติดต่องานหรือสอบถามข้อมูลเพิ่มเติมได้ทางช่องทางด้านล่าง</p>
+                    </div>
+
+                    <div class="flex justify-center items-center gap-6 sm:gap-10">
+                        <!-- Facebook Circle -->
+                        <a href="https://www.facebook.com/share/19jHFiaJMn/?mibextid=wwXIfr" target="_blank" class="group flex flex-col items-center gap-2">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#ffb6c1] border-2 border-white shadow-md flex items-center justify-center transition-transform transform group-hover:scale-110">
+                                <svg class="w-7 h-7 sm:w-8 sm:h-8 fill-white" viewBox="0 0 24 24">
+                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-bold text-[#8a516b] tracking-wide">Facebook</span>
+                        </a>
+
+                        <!-- LINE Circle -->
+                        <a href="https://lin.ee/XkF46in" target="_blank" class="group flex flex-col items-center gap-2">
+                            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#ffb6c1] border-2 border-white shadow-md flex items-center justify-center transition-transform transform group-hover:scale-110">
+                                <svg class="w-7 h-7 sm:w-8 sm:h-8 fill-white" viewBox="0 0 24 24">
+                                    <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.412-.105-.53-.282l-2.203-3.281v2.936c0 .345-.281.63-.629.63-.349 0-.63-.285-.63-.63V8.108c0-.27.173-.51.43-.595.063-.021.134-.032.2-.032.21 0 .411.106.529.283l2.204 3.281V8.108c0-.345.281-.63.63-.63.348 0 .63.285.63.63v4.771zm-5.741 0c0 .345-.282.63-.63.63-.348 0-.63-.285-.63-.63V8.108c0-.345.282-.63.63-.63.348 0 .63.285.63.63v4.771zm-2.466.63H4.917c-.349 0-.63-.285-.63-.63V8.108c0-.345.281-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314c0-4.707-4.832-8.542-10.741-8.542-5.908 0-10.74 3.835-10.74 8.542 0 4.218 3.836 7.755 9.019 8.411.351.076.83.232.951.531.109.271.071.696.035.97-.078.58-.359 2.274-.392 2.518-.052.392.242.766.621.41 2.929-2.753 5.431-4.887 7.42-6.68 2.502-2.222 3.857-4.321 3.857-6.16"/>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-bold text-[#8a516b] tracking-wide">LINE</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CHECK QUEUE -->
+    <div id="modal-queue" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-3">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-7 shadow-2xl border-2 border-[#f2adcc] relative max-h-[90vh] overflow-y-auto cute-scroll">
+            <button onclick="closeModal('modal-queue')" class="absolute top-4 right-4 bg-[#fff0f5] text-[#8a516b] w-8 h-8 rounded-full font-bold hover:bg-[#eb7aa6] hover:text-white transition flex items-center justify-center">✕</button>
+            
+            <div class="text-center mb-5">
+                <div class="text-3xl mb-1">📋</div>
+                <h3 class="font-fredoka text-xl font-bold text-[#8a516b]">CHECK QUEUE STATUS</h3>
+                <p class="text-xs text-[#bd859b]">ตรวจสอบสถานะคิวงานของคุณได้ตลอด 24 ชม.</p>
+            </div>
+
+            <!-- ช่องค้นหาคิว -->
+            <div class="mb-5 bg-[#fff8fb] p-3 rounded-2xl border border-[#f2adcc]/40">
+                <div class="flex gap-2">
+                    <input type="text" id="searchQueueInput" placeholder="พิมพ์ชื่อลูกค้า หรือ Code คิวงาน..." class="w-full bg-white border border-[#f2adcc] rounded-xl px-3 py-2 text-xs text-[#8a516b] focus:outline-none focus:ring-2 focus:ring-[#eb7aa6]">
+                    <button onclick="filterQueue()" class="bg-[#eb7aa6] text-white px-4 py-2 rounded-xl text-xs font-bold shrink-0 hover:bg-[#d86391] transition">ค้นหา</button>
+                </div>
+            </div>
+
+            <!-- Admin Add Queue Form -->
+            <div class="admin-only mb-6 bg-[#fffdf0] p-4 rounded-2xl border-2 border-[#fceb9a]">
+                <h4 class="font-bold text-xs text-[#8a516b] mb-2 flex items-center gap-1">➕ [แอดมิน] เพิ่ม/แก้ไข คิวลูกค้า</h4>
+                <div class="space-y-2 text-xs">
+                    <input type="text" id="adminCustomerName" placeholder="ชื่อลูกค้า / รหัสคิว" class="w-full border border-[#fceb9a] rounded-lg p-2 bg-white text-[#8a516b]">
+                    <input type="text" id="adminJobDetail" placeholder="รายละเอียดงาน (เช่น เว็บเติมเกมส์)" class="w-full border border-[#fceb9a] rounded-lg p-2 bg-white text-[#8a516b]">
+                    <select id="adminStatusSelect" class="w-full border border-[#fceb9a] rounded-lg p-2 bg-white text-[#8a516b] font-medium">
+                        <option value="0">รอรีพงาน (0%)</option>
+                        <option value="25">บรีพงานแล้ว (25%)</option>
+                        <option value="50">กำลังทำงาน (50%)</option>
+                        <option value="75">รอเช็คงาน (75%)</option>
+                        <option value="100">ส่งงานแล้ว (100%)</option>
+                    </select>
+                    <button onclick="addNewQueue()" class="w-full bg-[#eb7aa6] text-white font-bold py-2 rounded-lg hover:bg-[#d86391] transition">+ เพิ่มคิวเข้าสู่ระบบ</button>
+                </div>
+            </div>
+
+            <!-- Queue List Display -->
+            <div class="space-y-4" id="queueListContainer">
+                <!-- JS Will Render Queue Items Here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD REVIEW -->
+    <div id="modal-add-review" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-3">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-2 border-[#f2adcc] relative">
+            <button onclick="closeModal('modal-add-review')" class="absolute top-4 right-4 bg-[#fff0f5] text-[#8a516b] w-8 h-8 rounded-full font-bold hover:bg-[#eb7aa6] hover:text-white transition flex items-center justify-center">✕</button>
+
+            <div class="text-center mb-4">
+                <div class="text-3xl mb-1">💖</div>
+                <h3 class="font-fredoka text-xl font-bold text-[#8a516b]">WRITE A REVIEW</h3>
+                <p class="text-xs text-[#bd859b]">แชร์ความประทับใจบริการจาก Miori Studio</p>
+            </div>
+
+            <form onsubmit="handleReviewSubmit(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-[#8a516b] font-bold mb-1">ชื่อของคุณ / ชื่อร้าน</label>
+                    <input type="text" id="revName" required placeholder="เช่น คุณเมย์ / May Shop" class="w-full border border-[#f2adcc] rounded-xl p-2.5 bg-[#fff8fb] text-[#8a516b] focus:outline-none focus:ring-2 focus:ring-[#eb7aa6]">
+                </div>
+                <div>
+                    <label class="block text-[#8a516b] font-bold mb-1">ข้อความรีวิว</label>
+                    <textarea id="revComment" required rows="3" placeholder="เขียนความรู้สึกประทับใจเกี่ยวกับงานที่ได้รับ..." class="w-full border border-[#f2adcc] rounded-xl p-2.5 bg-[#fff8fb] text-[#8a516b] focus:outline-none focus:ring-2 focus:ring-[#eb7aa6]"></textarea>
+                </div>
+                <div>
+                    <label class="block text-[#8a516b] font-bold mb-1">แนบรูปภาพหลักฐาน (เพื่อป้องกันการปลอมรีวิว) <span class="text-red-400">*</span></label>
+                    <input type="file" id="revProofImg" accept="image/*" required class="w-full text-xs text-[#8a516b] file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#fff0f5] file:text-[#eb7aa6] hover:file:bg-[#ffe1ec]">
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-[#eb7aa6] to-[#f2adcc] text-white font-bold py-2.5 rounded-xl shadow-md hover:scale-[1.02] transition">
+                    ✨ ส่งรีวิวเข้าสู่ระบบ
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODALS SAMPLE CATEGORIES -->
+    <div id="modal-block" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-2 border-[#f2adcc] relative text-center">
+            <button onclick="closeModal('modal-block')" class="absolute top-4 right-4 bg-[#fff0f5] text-[#8a516b] w-8 h-8 rounded-full font-bold">✕</button>
+            <h3 class="font-fredoka text-xl font-bold text-[#8a516b] mb-4">̊+‧꒰ა Block ໒꒱ ‧+ ̊ SAMPLE</h3>
+            <p class="text-xs text-[#bd859b] mb-4">ตัวอย่างการจัดวางดีไซน์สไตล์ Block สบายตา มีระเบียบ</p>
+            <div class="aspect-video bg-[#fffdf0] rounded-xl border border-[#fceb9a] flex items-center justify-center text-[#8a516b] font-bold text-sm">
+                [ Block Style Visual Preview ]
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-toon" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-2 border-[#f2adcc] relative text-center">
+            <button onclick="closeModal('modal-toon')" class="absolute top-4 right-4 bg-[#fff0f5] text-[#8a516b] w-8 h-8 rounded-full font-bold">✕</button>
+            <h3 class="font-fredoka text-xl font-bold text-[#8a516b] mb-4">̊+‧꒰ა Toon ໒꒱ ‧+ ̊ SAMPLE</h3>
+            <p class="text-xs text-[#bd859b] mb-4">ตัวอย่างงานการ์ตูนลายน่ารัก ลุคแจ่มใส สไตล์ Miori</p>
+            <div class="aspect-video bg-[#fff8fb] rounded-xl border border-[#f2adcc] flex items-center justify-center text-[#8a516b] font-bold text-sm">
+                [ Toon Style Visual Preview ]
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-decor" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-2 border-[#f2adcc] relative text-center">
+            <button onclick="closeModal('modal-decor')" class="absolute top-4 right-4 bg-[#fff0f5] text-[#8a516b] w-8 h-8 rounded-full font-bold">✕</button>
+            <h3 class="font-fredoka text-xl font-bold text-[#8a516b] mb-4">̊+‧꒰ა Descor ໒꒱ ‧+ ̊ SAMPLE</h3>
+            <p class="text-xs text-[#bd859b] mb-4">เน้นของตกแต่ง พาสเทล ละมุนตา ดึงดูดสายตา</p>
+            <div class="aspect-video bg-[#fff5f8] rounded-xl border border-[#ffc2d5] flex items-center justify-center text-[#8a516b] font-bold text-sm">
+                [ Decor Style Visual Preview ]
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let adminMode = false;
+        let currentEditingImgId = null;
+
+        let polaroidsData = [
+            { id: 1, title: 'P-01 Banner', img: 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=1280&h=1280&auto=format&fit=crop&q=80', rot: '-2deg', tape: 'bg-tape-pink', drive: '' },
+            { id: 2, title: 'P-02 Goodnotes', img: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=1280&h=1280&auto=format&fit=crop&q=80', rot: '3deg', tape: 'bg-tape-yellow', drive: '' },
+            { id: 3, title: 'P-03 Premium App', img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1280&h=1280&auto=format&fit=crop&q=80', rot: '-3deg', tape: 'bg-tape-mint', drive: '' },
+            { id: 4, title: 'P-04 Game Topup', img: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=1280&h=1280&auto=format&fit=crop&q=80', rot: '2deg', tape: 'bg-tape-pink', drive: '' },
+            { id: 5, title: 'P-05 Artwork Tag', img: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=1280&h=1280&auto=format&fit=crop&q=80', rot: '-2deg', tape: 'bg-tape-yellow', drive: '' },
+            { id: 6, title: 'P-06 Web Custom', img: 'https://images.unsplash.com/photo-1516962215378-7fa2e137ae93?w=1280&h=1280&auto=format&fit=crop&q=80', rot: '3deg', tape: 'bg-tape-mint', drive: '' },
+        ];
+
+        let queuesData = [
+            { id: 1, name: 'คุณเนย (K.Noey)', detail: 'เว็บเรทราคาแอปพรีเมียม', percent: 75, statusText: 'รอเช็คงาน' },
+            { id: 2, name: 'คุณมายด์ (K.Mind)', detail: 'เว็บเติมเกมส์ + Decor', percent: 50, statusText: 'กำลังทำงาน' },
+            { id: 3, name: 'คุณโบว์ (K.Bow)', detail: 'สมุดบันทึก Goodnotes', percent: 25, statusText: 'บรีพงานแล้ว' },
+            { id: 4, name: 'คุณแอม (K.Amm)', detail: 'เว็บทำป้ายราคา', percent: 0, statusText: 'รอรีพงาน' },
+        ];
+
+        let reviewsData = [
+            { id: 1, name: 'คุณแพรว (ร้าน Preaw_Shop)', comment: 'งานน่ารักตรงตามบรีฟมากเลยค่ะ จัดวางเป็นระเบียบสุดๆ ส่งงานไวกว่าที่คิดด้วย ประทับใจมากค่ะ!', date: '12 ก.ย. 2026', proofImg: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80' },
+            { id: 2, name: 'คุณเฟิร์น (Fern GameTopup)', comment: 'แอดมินให้คำแนะนำดีมาก งานเว็บปรับแก้น้อยมาก บริการเป็นกันเอง จะกลับมาอุดหนุนอีกแน่นอนค่ะ 💖', date: '15 ก.ย. 2026', proofImg: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&auto=format&fit=crop&q=80' }
+        ];
+
+        const statusMap = {
+            0: 'รอรีพงาน',
+            25: 'บรีพงานแล้ว',
+            50: 'กำลังทำงาน',
+            75: 'รอเช็คงาน',
+            100: 'ส่งงานแล้ว'
+        };
+
+        function renderPolaroids() {
+            const grid = document.getElementById('polaroidGrid');
+            grid.innerHTML = '';
+            polaroidsData.forEach((p) => {
+                const card = document.createElement('div');
+                card.className = `polaroid transform rotate-[${p.rot}] cursor-pointer group rounded-lg`;
+                card.onclick = () => {
+                    if (adminMode) {
+                        editDriveLink(p.id);
+                    } else if (p.drive) {
+                        window.open(p.drive, '_blank');
+                    } else {
+                        alert('ยังไม่ได้ใส่ลิงก์ Google Drive');
+                    }
+                };
+
+                card.innerHTML = `
+                    <div class="tape ${p.tape} tape-1 -top-3 left-1/2 transform -translate-x-1/2 w-16 h-5"></div>
+                    <div class="w-full aspect-square bg-gray-100 overflow-hidden rounded-sm relative editable-image-container mb-2" onclick="if(adminMode){ event.stopPropagation(); triggerImageSelect('p-img-${p.id}'); }">
+                        <img id="p-img-${p.id}" src="${p.img}" alt="${p.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                    </div>
+                    <div class="text-center space-y-1">
+                        <div class="text-[10px] font-bold text-[#8a516b] font-fredoka truncate">${p.title}</div>
+                        ${p.drive ? `<span class="inline-block bg-[#fff0f5] text-[#eb7aa6] text-[8px] px-2 py-0.5 rounded-full font-bold">📂 Google Drive</span>` : ''}
+                        ${adminMode ? `<button onclick="event.stopPropagation(); editDriveLink(${p.id})" class="block w-full bg-[#fceb9a] text-[#8a516b] text-[8px] font-bold py-0.5 rounded mt-1">🔗 ใส่ลิงก์ Drive</button>` : ''}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderQueues(dataToRender = queuesData) {
+            const container = document.getElementById('queueListContainer');
+            container.innerHTML = '';
+
+            if (dataToRender.length === 0) {
+                container.innerHTML = `<div class="text-center py-6 text-xs text-[#bd859b]">ไม่พบข้อมูลคิวงานที่ค้นหา</div>`;
+                return;
+            }
+
+            dataToRender.forEach((q) => {
+                const item = document.createElement('div');
+                item.className = 'bg-[#fff8fb] p-3.5 rounded-2xl border border-[#f2adcc]/40 space-y-2 relative';
+                
+                item.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="font-bold text-xs text-[#8a516b]">${q.name}</span>
+                            <p class="text-[10px] text-[#bd859b]">${q.detail}</p>
+                        </div>
+                        <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white text-[#eb7aa6] border border-[#f2adcc]">${q.statusText} (${q.percent}%)</span>
+                    </div>
+
+                    <div class="w-full bg-white h-3.5 rounded-full p-0.5 border border-[#f2adcc]/50 shadow-inner overflow-hidden">
+                        <div class="bg-gradient-to-r from-[#ffc2d5] to-[#eb7aa6] h-full rounded-full transition-all duration-500 relative" style="width: ${q.percent}%">
+                            <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+                        </div>
+                    </div>
+
+                    ${adminMode ? `
+                        <div class="flex items-center justify-between pt-1 border-t border-dashed border-[#f2adcc]/30 text-[10px]">
+                            <div class="flex gap-1 items-center">
+                                <span class="font-bold text-[#8a516b]">ปรับสถานะ:</span>
+                                <select onchange="updateQueuePercent(${q.id}, this.value)" class="bg-white border border-[#f2adcc] rounded px-1.5 py-0.5 text-[#8a516b]">
+                                    <option value="0" ${q.percent == 0 ? 'selected' : ''}>0% (รอรีพงาน)</option>
+                                    <option value="25" ${q.percent == 25 ? 'selected' : ''}>25% (บรีพงานแล้ว)</option>
+                                    <option value="50" ${q.percent == 50 ? 'selected' : ''}>50% (กำลังทำงาน)</option>
+                                    <option value="75" ${q.percent == 75 ? 'selected' : ''}>75% (รอเช็คงาน)</option>
+                                    <option value="100" ${q.percent == 100 ? 'selected' : ''}>100% (ส่งงานแล้ว)</option>
+                                </select>
+                            </div>
+                            <button onclick="deleteQueue(${q.id})" class="bg-red-400 text-white px-2 py-0.5 rounded font-bold hover:bg-red-500 transition">🗑️ ลบคิว</button>
+                        </div>
+                    ` : ''}
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function renderReviews() {
+            const container = document.getElementById('reviewsContainer');
+            container.innerHTML = '';
+
+            reviewsData.forEach((r) => {
+                const card = document.createElement('div');
+                card.className = 'bg-[#fff0f5] p-4 rounded-2xl border border-[#f2adcc]/50 relative space-y-2';
+
+                card.innerHTML = `
+                    <div class="speech-bubble bg-white p-3 rounded-xl border border-[#f2adcc]/30 shadow-sm text-xs text-[#8a516b] leading-relaxed relative">
+                        "${r.comment}"
+                    </div>
+                    <div class="flex items-center justify-between pt-1 px-1">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-full bg-[#eb7aa6] text-white flex items-center justify-center text-[10px] font-bold">🌸</div>
+                            <div>
+                                <div class="font-bold text-xs text-[#8a516b]">${r.name}</div>
+                                <div class="text-[9px] text-[#bd859b]">${r.date}</div>
+                            </div>
+                        </div>
+                        ${r.proofImg ? `
+                            <button onclick="viewProof('${r.proofImg}')" class="text-[10px] font-bold text-[#eb7aa6] bg-white border border-[#f2adcc] px-2 py-1 rounded-lg hover:bg-[#fff8fb] transition flex items-center gap-1">
+                                🖼️ รูปหลักฐาน
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleAdminMode() {
+            adminMode = !adminMode;
+            const body = document.body;
+            const btn = document.getElementById('adminToggleBtn');
+            const saveBtn = document.getElementById('saveAdminBtn');
+            const editables = document.querySelectorAll('[data-editable-id]');
+
+            if (adminMode) {
+                body.classList.add('admin-mode');
+                btn.innerText = 'ปิดโหมดแก้ไข';
+                btn.classList.replace('bg-[#eb7aa6]', 'bg-gray-500');
+                saveBtn.classList.remove('hidden');
+                editables.forEach(el => el.setAttribute('contenteditable', 'true'));
+            } else {
+                body.classList.remove('admin-mode');
+                btn.innerText = 'เปิดโหมดแก้ไข';
+                btn.classList.replace('bg-gray-500', 'bg-[#eb7aa6]');
+                saveBtn.classList.add('hidden');
+                editables.forEach(el => el.setAttribute('contenteditable', 'false'));
+            }
+
+            renderPolaroids();
+            renderQueues();
+        }
+
+        function triggerImageSelect(targetImgId) {
+            if (!adminMode) return;
+            currentEditingImgId = targetImgId;
+            document.getElementById('globalFileInput').click();
+        }
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (file && currentEditingImgId) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const imgEl = document.getElementById(currentEditingImgId);
+                    if (imgEl) imgEl.src = evt.target.result;
+
+                    if (currentEditingImgId.startsWith('p-img-')) {
+                        const pid = parseInt(currentEditingImgId.replace('p-img-', ''));
+                        const pol = polaroidsData.find(item => item.id === pid);
+                        if (pol) pol.img = evt.target.result;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function editDriveLink(pid) {
+            const pol = polaroidsData.find(item => item.id === pid);
+            if (!pol) return;
+            const newLink = prompt('ใส่ลิงก์ Google Drive สำหรับช่องนี้:', pol.drive || '');
+            if (newLink !== null) {
+                pol.drive = newLink.trim();
+                renderPolaroids();
+            }
+        }
+
+        function saveAdminData() {
+            alert('💾 บันทึกข้อมูลเรียบร้อยแล้ว!');
+            toggleAdminMode();
+        }
+
+        function addNewQueue() {
+            const name = document.getElementById('adminCustomerName').value.trim();
+            const detail = document.getElementById('adminJobDetail').value.trim();
+            const percent = parseInt(document.getElementById('adminStatusSelect').value);
+
+            if (!name) {
+                alert('กรุณากรอกชื่อลูกค้า');
+                return;
+            }
+
+            const newQ = {
+                id: Date.now(),
+                name: name,
+                detail: detail || 'รับทำเว็บไซต์',
+                percent: percent,
+                statusText: statusMap[percent]
+            };
+
+            queuesData.unshift(newQ);
+            document.getElementById('adminCustomerName').value = '';
+            document.getElementById('adminJobDetail').value = '';
+            renderQueues();
+        }
+
+        function updateQueuePercent(id, newPercent) {
+            const q = queuesData.find(item => item.id === id);
+            if (q) {
+                q.percent = parseInt(newPercent);
+                q.statusText = statusMap[q.percent];
+                renderQueues();
+            }
+        }
+
+        function deleteQueue(id) {
+            if (confirm('ต้องการลบคิวงานนี้ใช่หรือไม่?')) {
+                queuesData = queuesData.filter(q => q.id !== id);
+                renderQueues();
+            }
+        }
+
+        function filterQueue() {
+            const keyword = document.getElementById('searchQueueInput').value.toLowerCase().trim();
+            if (!keyword) {
+                renderQueues(queuesData);
+                return;
+            }
+            const filtered = queuesData.filter(q => q.name.toLowerCase().includes(keyword) || q.detail.toLowerCase().includes(keyword));
+            renderQueues(filtered);
+        }
+
+        function handleReviewSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('revName').value.trim();
+            const comment = document.getElementById('revComment').value.trim();
+            const fileInput = document.getElementById('revProofImg');
+
+            if (!fileInput.files[0]) {
+                alert('กรุณาแนบรูปหลักฐานเพื่อยืนยันการใช้บริการค่ะ');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const newRev = {
+                    id: Date.now(),
+                    name: name,
+                    comment: comment,
+                    date: 'วันนี้',
+                    proofImg: evt.target.result
+                };
+                reviewsData.unshift(newRev);
+                renderReviews();
+                closeModal('modal-add-review');
+                alert('✨ ขอบคุณสำหรับรีวิวค่ะ!');
+                e.target.reset();
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+
+        function viewProof(imgSrc) {
+            const win = window.open("");
+            win.document.write(`<img src="${imgSrc}" style="max-width:100%; height:auto; display:block; margin:20px auto; border-radius:12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">`);
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        window.onload = function() {
+            renderPolaroids();
+            renderQueues();
+            renderReviews();
+        };
+    </script>
+</body>
+</html>
